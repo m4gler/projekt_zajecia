@@ -1,0 +1,6 @@
+.next
+node_modules
+storage/uploads
+npm-debug.log*
+tsconfig.tsbuildinfo
+projekt_zajecia/
