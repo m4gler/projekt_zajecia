@@ -11,6 +11,11 @@ type JobRecord = {
   error?: string;
   createdAt: string;
   updatedAt: string;
+  geometry?: {
+    vertices: number[];
+    normals: number[];
+    indices: number[];
+  };
 };
 
 type JobListener = (event: ProgressEvent) => void;
@@ -48,7 +53,28 @@ function toProgressEvent(job: JobRecord): ProgressEvent {
     message: job.message,
     fileName: job.fileName,
     updatedAt: job.updatedAt,
+    geometry: job.geometry,
   };
+}
+
+function generateMockBox() {
+  const vertices = [
+    -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1,
+    -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1
+  ];
+  const normals = [
+    0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+  ];
+  const indices = [
+    0, 1, 2, 2, 3, 0,
+    1, 5, 6, 6, 2, 1,
+    5, 4, 7, 7, 6, 5,
+    4, 0, 3, 3, 7, 4,
+    3, 2, 6, 6, 7, 3,
+    4, 5, 1, 1, 0, 4
+  ];
+  return { vertices, normals, indices };
 }
 
 function emit(jobId: string) {
@@ -100,7 +126,7 @@ export function getProgressEvent(jobId: string) {
 
 export function updateJob(
   jobId: string,
-  patch: Partial<Pick<JobRecord, "percent" | "stage" | "message" | "error">>,
+  patch: Partial<Pick<JobRecord, "percent" | "stage" | "message" | "error" | "geometry">>,
 ) {
   const existing = jobs.get(jobId);
 
@@ -180,6 +206,12 @@ export async function simulateInitialPipeline(jobId: string) {
     await new Promise((resolve) => {
       setTimeout(resolve, step.delayMs);
     });
-    updateJob(jobId, step);
+
+    const patch: any = { ...step };
+    if (step.stage === "completed") {
+      patch.geometry = generateMockBox();
+    }
+
+    updateJob(jobId, patch);
   }
 }

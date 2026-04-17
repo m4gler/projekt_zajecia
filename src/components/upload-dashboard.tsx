@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { ProgressEvent, UploadApiResponse } from "@/lib/types";
+import { StepViewer } from "./StepViewer";
 
 type UploadState = "idle" | "uploading" | "streaming" | "done" | "error";
 
@@ -287,9 +288,15 @@ export function UploadDashboard() {
 
             <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-4">
               <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Komunikat</div>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                {error ?? progress?.message ?? "Wybierz plik i uruchom analizę modelu."}
-              </p>
+              {status === "done" && progress?.geometry ? (
+                <div className="mt-4">
+                  <StepViewer geometry={progress.geometry} />
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  {error ?? progress?.message ?? "Wybierz plik i uruchom analizę modelu."}
+                </p>
+              )}
             </div>
 
             <div className="rounded-3xl border border-slate-800 p-4">

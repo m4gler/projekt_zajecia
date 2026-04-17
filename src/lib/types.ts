@@ -16,6 +16,11 @@ export type ProgressEvent =
       fileName?: string;
       error?: undefined;
       updatedAt: string;
+      geometry?: {
+        vertices: number[];
+        normals: number[];
+        indices: number[];
+      };
     }
   | {
       type: "progress";
@@ -26,6 +31,7 @@ export type ProgressEvent =
       fileName?: string;
       error: string;
       updatedAt: string;
+      geometry?: undefined;
     };
 
 export type UploadApiResponse =
