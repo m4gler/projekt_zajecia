@@ -12,7 +12,9 @@ const stageLabels: Record<string, string> = {
   queued: "W kolejce",
   validating: "Walidacja pliku",
   saving_file: "Zapis pliku",
+  processing: "Przetwarzanie CAD",
   preparing_cad_pipeline: "Przygotowanie modelu",
+  ai_analysis: "Analiza AI",
   completed: "Zakończono",
   failed: "Błąd",
 };
@@ -50,7 +52,7 @@ export function UploadDashboard() {
       return;
     }
 
-    const source = new EventSource(`/api/progress/${jobId}/stream`);
+    const source = new EventSource(`http://localhost:3001/api/step/progress/${jobId}/stream`);
     eventSourceRef.current = source;
     setStatus((current) => (current === "done" ? current : "streaming"));
 
@@ -101,7 +103,7 @@ export function UploadDashboard() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    const response = await fetch("/api/step/upload", {
+    const response = await fetch("http://localhost:3001/api/step/upload", {
       method: "POST",
       body: formData,
     });
@@ -290,7 +292,65 @@ export function UploadDashboard() {
               <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Komunikat</div>
               {status === "done" && progress?.geometry ? (
                 <div className="mt-4">
+                  <div className="text-lg font-semibold text-white mb-2">Podgląd 3D</div>
                   <StepViewer geometry={progress.geometry} />
+
+                  {progress.groupedParts && progress.groupedParts.length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <div className="text-lg font-semibold text-white">Wykaz części (BOM)</div>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {progress.groupedParts.map((group: any, idx: number) => (
+                          <div key={idx} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
+                            <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+                              {group.representative.category === 'connector' ? 'Łącznik' : 'Panel'}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-white truncate">
+                                Część {idx + 1}
+                              </span>
+                              <span className="rounded-md bg-teal-500/20 px-1.5 py-0.5 text-[10px] font-bold text-teal-400">
+                                ×{group.count}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[10px] text-slate-400">
+                              {Math.round(group.representative.dimensions.x)}x{Math.round(group.representative.dimensions.y)} mm
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {progress.assemblySteps && progress.assemblySteps.length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <div className="text-lg font-semibold text-white">Instrukcja Montażu (AI)</div>
+                      <div className="max-h-64 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        {progress.assemblySteps.map((step: any) => (
+                          <div key={step.stepNumber} className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
+                                {step.stepNumber}
+                              </span>
+                              <h3 className="font-semibold text-white">{step.title}</h3>
+                            </div>
+                            <p className="text-sm text-slate-300">{step.description}</p>
+                            {step.partRoles && (
+                              <div className="mt-2 text-xs text-slate-400">
+                                Części: {Object.entries(step.partRoles).map(([id, role]) => `${role} (ID: ${id})`).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {progress.error && !progress.assemblySteps && (
+                    <div className="mt-8 p-4 rounded-2xl border border-red-500/50 bg-red-500/10 text-red-200">
+                      <div className="text-xs uppercase tracking-wider text-red-400 mb-1 font-bold">Błąd analizy AI</div>
+                      <p className="text-sm leading-relaxed">{progress.error}</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-slate-300">

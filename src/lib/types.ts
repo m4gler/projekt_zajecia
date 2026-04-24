@@ -2,7 +2,9 @@ export type JobStage =
   | "queued"
   | "validating"
   | "saving_file"
+  | "processing"
   | "preparing_cad_pipeline"
+  | "ai_analysis"
   | "completed"
   | "failed";
 
@@ -21,6 +23,8 @@ export type ProgressEvent =
         normals: number[];
         indices: number[];
       };
+      assemblySteps?: any[];
+      groupedParts?: any[];
     }
   | {
       type: "progress";
@@ -32,6 +36,7 @@ export type ProgressEvent =
       error: string;
       updatedAt: string;
       geometry?: undefined;
+      assemblySteps?: undefined;
     };
 
 export type UploadApiResponse =
